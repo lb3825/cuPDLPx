@@ -598,13 +598,36 @@ void compute_residual(pdhg_solver_state_t *state)
         state->constraint_upper_bound_finite_val, state->num_constraints,
         state->num_variables);
 
-    CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_constraints,
-                                   state->primal_residual, 1,
-                                   &state->absolute_primal_residual));
+    if (state->use_linf_norm) {
+        state->absolute_primal_residual = get_vector_inf_norm(state->blas_handle, 
+                                          state->num_constraints, state->primal_residual);
+    } else {
+        CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_constraints, 
+                                       state->primal_residual, 1, 
+                                       &state->absolute_primal_residual));
+    }
+
+    // CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_constraints,
+    //                                state->primal_residual, 1,
+    //                                &state->absolute_primal_residual));
+
+    // state->absolute_primal_residual = get_vector_inf_norm(
+    //     state->blas_handle, state->num_constraints, state->primal_residual);
     state->absolute_primal_residual /= state->constraint_bound_rescaling;
-    CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_variables,
-                                   state->dual_residual, 1,
-                                   &state->absolute_dual_residual));
+
+    if (state->use_linf_norm) {
+        state->absolute_dual_residual = get_vector_inf_norm(state->blas_handle, 
+                                        state->num_variables, state->dual_residual);
+    } else {
+        CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_variables,
+                                       state->dual_residual, 1,
+                                       &state->absolute_dual_residual));
+    }
+    // CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_variables,
+    //                                state->dual_residual, 1,
+    //                                &state->absolute_dual_residual));
+    // state->absolute_dual_residual = get_vector_inf_norm(
+    //     state->blas_handle, state->num_variables, state->dual_residual);
     state->absolute_dual_residual /= state->objective_vector_rescaling;
 
     CUBLAS_CHECK(cublasDdot(
@@ -1121,7 +1144,16 @@ void compute_primal_feas_polish_residual(pdhg_solver_state_t *state, const pdhg_
         state->constraint_upper_bound, state->constraint_rescaling,
         state->num_constraints);
 
-    CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_constraints, state->primal_residual, 1, &state->absolute_primal_residual));
+    if (state->use_linf_norm) {
+        state->absolute_primal_residual = get_vector_inf_norm(state->blas_handle, 
+                                          state->num_constraints, state->primal_residual);
+    } else {
+        CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_constraints, 
+                                       state->primal_residual, 1, &state->absolute_primal_residual));
+    }
+    // CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_constraints, state->primal_residual, 1, &state->absolute_primal_residual));
+    // state->absolute_primal_residual = get_vector_inf_norm(
+    //     state->blas_handle, state->num_constraints, state->primal_residual);
     state->absolute_primal_residual /= state->constraint_bound_rescaling;
     state->relative_primal_residual = state->absolute_primal_residual / (1.0 + state->constraint_bound_norm);
 
@@ -1148,7 +1180,16 @@ void compute_dual_feas_polish_residual(pdhg_solver_state_t *state, const pdhg_so
         state->num_variables, state->num_constraints
     );
 
-    CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_variables, state->dual_residual, 1, &state->absolute_dual_residual));
+    if (state->use_linf_norm) {
+        state->absolute_dual_residual = get_vector_inf_norm(state->blas_handle, 
+                                        state->num_variables, state->dual_residual);
+    } else {
+        CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_variables, 
+                                       state->dual_residual, 1, &state->absolute_dual_residual));
+    }
+    // CUBLAS_CHECK(cublasDnrm2_v2_64(state->blas_handle, state->num_variables, state->dual_residual, 1, &state->absolute_dual_residual));
+    // state->absolute_dual_residual = get_vector_inf_norm(
+    //     state->blas_handle, state->num_variables, state->dual_residual);
     state->absolute_dual_residual /= state->objective_vector_rescaling;
     state->relative_dual_residual = state->absolute_dual_residual / (1.0 + state->objective_vector_norm);
 

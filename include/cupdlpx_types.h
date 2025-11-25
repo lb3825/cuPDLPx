@@ -89,6 +89,7 @@ extern "C"
 		restart_parameters_t restart_params;
 		double reflection_coefficient;
 		bool feasibility_polishing;
+		bool use_linf_norm;
 	} pdhg_parameters_t;
 
 	typedef struct

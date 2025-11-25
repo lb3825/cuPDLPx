@@ -52,5 +52,7 @@ _PARAM_ALIAS = {
     "ReflectionCoeff": "reflection_coefficient",
     # feasibility polishing
     "FeasibilityPolishing": "feasibility_polishing",
-    "FeasibilityPolishingTol": "eps_feas_polish_relative"
+    "FeasibilityPolishingTol": "eps_feas_polish_relative",
+    # termination criteria norm
+    "UseLInfNorm": "use_linf_norm"
 }

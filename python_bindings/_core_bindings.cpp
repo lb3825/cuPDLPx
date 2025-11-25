@@ -240,6 +240,9 @@ static py::dict get_default_params_py()
     d["feasibility_polishing"] = p.feasibility_polishing;
     d["eps_feas_polish_relative"] = p.termination_criteria.eps_feas_polish_relative;
 
+    // Termination criteria norm
+    d["use_linf_norm"] = p.use_linf_norm;
+
     return d;
 }
 
@@ -288,6 +291,9 @@ static void parse_params_from_python(py::object params_obj, pdhg_parameters_t *p
     // Feasibility Polishing
     getb("feasibility_polishing", p->feasibility_polishing);
     getf("eps_feas_polish_relative", p->termination_criteria.eps_feas_polish_relative);
+
+    // Termination criteria norm
+    getb("use_linf_norm", p->use_linf_norm);
 }
 
 // view of matrix from Python
