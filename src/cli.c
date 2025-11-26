@@ -191,8 +191,8 @@ int main(int argc, char *argv[])
         {"verbose", no_argument, 0, 'v'},
         {"time_limit", required_argument, 0, 1001},
         {"iter_limit", required_argument, 0, 1002},
-        {"absolute_termination", no_argument, 0, 'f'}
-        {"linf_norm", no_argument, 0, 'f'}
+        {"absolute_termination", no_argument, 0, 'f'},
+        {"linf_norm", no_argument, 0, 'f'},
         {"eps_opt", required_argument, 0, 1003},
         {"eps_feas", required_argument, 0, 1004},
         {"eps_infeas_detect", required_argument, 0, 1005},
