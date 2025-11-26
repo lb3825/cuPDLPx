@@ -104,6 +104,7 @@ typedef struct
 	double last_trial_fixed_point_error;
 	int inner_count;
 	bool use_linf_norm;
+	bool use_absolute_termination;
 
 	cusparseHandle_t sparse_handle;
 	cublasHandle_t blas_handle;

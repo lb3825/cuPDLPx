@@ -90,6 +90,7 @@ extern "C"
 		double reflection_coefficient;
 		bool feasibility_polishing;
 		bool use_linf_norm;
+		bool use_absolute_termination;
 	} pdhg_parameters_t;
 
 	typedef struct

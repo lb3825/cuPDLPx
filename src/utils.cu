@@ -220,9 +220,15 @@ const char *termination_reason_to_string(termination_reason_t reason)
 bool optimality_criteria_met(const pdhg_solver_state_t *state,
                              double rel_opt_tol, double rel_feas_tol)
 {
-    return state->relative_dual_residual < rel_feas_tol &&
-           state->relative_primal_residual < rel_feas_tol &&
-           state->relative_objective_gap < rel_opt_tol;
+    if (state->use_absolute_termination) {
+        return state->absolute_primal_residual < rel_feas_tol &&
+               state->absolute_dual_residual < rel_feas_tol &&
+               state->objective_gap < rel_opt_tol;
+    } else {
+        return state->relative_dual_residual < rel_feas_tol &&
+               state->relative_primal_residual < rel_feas_tol &&
+               state->relative_objective_gap < rel_opt_tol;
+    }
 }
 
 bool primal_infeasibility_criteria_met(const pdhg_solver_state_t *state,
@@ -380,6 +386,9 @@ void pdhg_final_log(const pdhg_solver_state_t *state, bool verbose,
     printf("  Dual obj      : %.10g\n", state->dual_objective_value);
     printf("  Primal infeas : %.3e\n", state->relative_primal_residual);
     printf("  Dual infeas   : %.3e\n", state->relative_dual_residual);
+    printf("  abs_prim_res  : %.3e\n", state->absolute_primal_residual);
+    printf("  abs_dual_res  : %.3e\n", state->absolute_dual_residual);
+    printf("  objective_gap : %.3e\n", state->objective_gap);
 }
 
 void display_iteration_stats(const pdhg_solver_state_t *state, bool verbose)

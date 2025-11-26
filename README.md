@@ -64,6 +64,8 @@ The solver is invoked with the following syntax, specifying an input file and an
 | `-v`, `--verbose` | `flag` | Enable verbose logging. | `false` |
 | `--time_limit` | `double` | Time limit in seconds. | `3600.0` |
 | `--iter_limit` | `int` | Iteration limit. | `2147483647` |
+| `--absolute_termination` | `flag` | Use unscalled termination criteria | `false` |
+| `--linf_norm` | `flag` | Use infinity norm in termination criteria | `false` |
 | `--eps_opt` | `double` | Relative optimality tolerance. | `1e-4` |
 | `--eps_feas` | `double` | Relative feasibility tolerance. | `1e-4` |
 | `--eps_infeas_detect` | `double` | Infeasibility detection tolerance. | `1e-10` |

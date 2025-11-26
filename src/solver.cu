@@ -102,6 +102,7 @@ cupdlpx_result_t *optimize(const pdhg_parameters_t *params,
         initialize_solver_state(original_problem, rescale_info);
 
     state->use_linf_norm = params ? params->use_linf_norm : false;
+    state->use_absolute_termination = params ? params->use_absolute_termination : false;
 
     rescale_info_free(rescale_info);
     initialize_step_size_and_primal_weight(state, params);
@@ -964,6 +965,7 @@ void set_default_parameters(pdhg_parameters_t *params)
     params->termination_evaluation_frequency = 200;
     params->feasibility_polishing = false;
     params->use_linf_norm = false;
+    params->use_absolute_termination = false;
     params->reflection_coefficient = 1.0;
 
     params->termination_criteria.eps_optimal_relative = 1e-4;

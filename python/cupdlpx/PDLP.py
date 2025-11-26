@@ -53,6 +53,7 @@ _PARAM_ALIAS = {
     # feasibility polishing
     "FeasibilityPolishing": "feasibility_polishing",
     "FeasibilityPolishingTol": "eps_feas_polish_relative",
-    # termination criteria norm
-    "UseLInfNorm": "use_linf_norm"
+    # termination criteria
+    "UseLInfNorm": "use_linf_norm",
+    "UseAbsoluteTermination": "use_absolute_termination"
 }
