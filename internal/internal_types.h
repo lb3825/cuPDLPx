@@ -47,6 +47,7 @@ typedef struct
 	int num_blocks_dual;
 	int num_blocks_primal_dual;
 	double objective_vector_norm;
+	double objective_vector_norm_inf;
 	double constraint_bound_norm;
 	double *constraint_lower_bound_finite_val;
 	double *constraint_upper_bound_finite_val;

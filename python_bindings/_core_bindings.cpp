@@ -242,7 +242,6 @@ static py::dict get_default_params_py()
 
     // Termination criteria norm
     d["use_linf_norm"] = p.use_linf_norm;
-    d["use_absolute_termination"] = p.use_absolute_termination;
 
     return d;
 }
@@ -295,7 +294,6 @@ static void parse_params_from_python(py::object params_obj, pdhg_parameters_t *p
 
     // Termination criteria norm
     getb("use_linf_norm", p->use_linf_norm);
-    getb("use_absolute_termination", p->use_absolute_termination);
 }
 
 // view of matrix from Python

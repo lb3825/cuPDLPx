@@ -356,13 +356,17 @@ initialize_solver_state(const lp_problem_t *original_problem,
     free(temp_host);
 
     double sum_of_squares = 0.0;
+    double max_obj = 0.0;
 
     for (int i = 0; i < n_vars; ++i)
     {
         sum_of_squares += original_problem->objective_vector[i] *
                           original_problem->objective_vector[i];
+        double val = fabs(original_problem->objective_vector[i]);
+        if (val > max_obj) max_obj = val;
     }
     state->objective_vector_norm = sqrt(sum_of_squares);
+    state->objective_vector_norm_inf = max_obj;
 
     sum_of_squares = 0.0;
 
