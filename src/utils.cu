@@ -220,6 +220,11 @@ const char *termination_reason_to_string(termination_reason_t reason)
 bool optimality_criteria_met(const pdhg_solver_state_t *state,
                              double rel_opt_tol, double rel_feas_tol)
 {
+    // printf("optimality_criteria_met function\n");
+    // printf("state->total_count: %d\n", state->total_count);
+    // printf("state->relative_dual_residual: %.3e\n", state->relative_dual_residual);
+    // printf("state->relative_primal_residual: %.3e\n", state->relative_primal_residual);
+    // printf("state->relative_objective_gap: %.3e\n", state->relative_objective_gap);
     return state->relative_dual_residual < rel_feas_tol &&
             state->relative_primal_residual < rel_feas_tol &&
             state->relative_objective_gap < rel_opt_tol;
@@ -380,6 +385,8 @@ void pdhg_final_log(const pdhg_solver_state_t *state, bool verbose,
     printf("  Dual obj      : %.10g\n", state->dual_objective_value);
     printf("  Primal infeas : %.3e\n", state->relative_primal_residual);
     printf("  Dual infeas   : %.3e\n", state->relative_dual_residual);
+    // printf("  Primal Dual Gap      : %.3e\n", fabs(state->primal_objective_value - state->dual_objective_value) / (1.0 + fabs(state->primal_objective_value) + fabs(state->dual_objective_value)));
+    printf("  Primal Dual Gap      : %.3e\n", fabs(state->primal_objective_value - state->dual_objective_value) / (1.0 + fmax(fabs(state->primal_objective_value), fabs(state->dual_objective_value))));
 }
 
 void display_iteration_stats(const pdhg_solver_state_t *state, bool verbose)
@@ -643,9 +650,17 @@ void compute_residual(pdhg_solver_state_t *state)
     if (state->use_linf_norm) {
         state->relative_primal_residual = 
             state->absolute_primal_residual / (1.0 + state->constraint_bound_norm_inf);
+        // state->relative_primal_residual = 
+        //     state->absolute_primal_residual / (1.0 + get_vector_inf_norm(state->blas_handle, 
+        //                                           state->num_constraints, 
+        //                                           state->primal_product));
 
         state->relative_dual_residual = 
             state->absolute_dual_residual / (1.0 + state->objective_vector_norm_inf);
+        // state->relative_dual_residual = 
+        //     state->absolute_dual_residual / (1.0 + fmax(state->objective_vector_norm_inf, get_vector_inf_norm(state->blas_handle, 
+        //                                            state->num_variables, 
+        //                                            state->dual_product)));
     } else {
         state->relative_primal_residual =
             state->absolute_primal_residual / (1.0 + state->constraint_bound_norm);
@@ -656,9 +671,16 @@ void compute_residual(pdhg_solver_state_t *state)
     state->objective_gap =
         fabs(state->primal_objective_value - state->dual_objective_value);
 
+    // state->relative_objective_gap =
+    //     state->objective_gap / (1.0 + fabs(state->primal_objective_value) +
+    //                             fabs(state->dual_objective_value));
     state->relative_objective_gap =
-        state->objective_gap / (1.0 + fabs(state->primal_objective_value) +
-                                fabs(state->dual_objective_value));
+        state->objective_gap / (1.0 + fmax(fabs(state->primal_objective_value),
+                                fabs(state->dual_objective_value)));
+
+    // printf("state->relative_dual_residual: %.3e\n", state->relative_dual_residual);
+    // printf("state->relative_primal_residual: %.3e\n", state->relative_primal_residual);
+    // printf("state->relative_objective_gap: %.3e\n", state->relative_objective_gap);
 }
 
 void compute_infeasibility_information(pdhg_solver_state_t *state)

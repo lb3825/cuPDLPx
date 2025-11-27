@@ -357,21 +357,19 @@ initialize_solver_state(const lp_problem_t *original_problem,
 
     double sum_of_squares = 0.0;
     double max_val = 0.0;
-    double val = 0.0
 
     for (int i = 0; i < n_vars; ++i)
     {
         sum_of_squares += original_problem->objective_vector[i] *
                           original_problem->objective_vector[i];
-        val = fabs(original_problem->objective_vector[i]);
-        if (val > max_obj) max_val = val;
+        double val = fabs(original_problem->objective_vector[i]);
+        if (val > max_val) max_val = val;
     }
     state->objective_vector_norm = sqrt(sum_of_squares);
     state->objective_vector_norm_inf = max_val;
 
     sum_of_squares = 0.0;
     max_val = 0.0;
-    val = 0.0;
 
     for (int i = 0; i < n_cons; ++i)
     {
@@ -381,18 +379,17 @@ initialize_solver_state(const lp_problem_t *original_problem,
         if (isfinite(lower) && (lower != upper))
         {
             sum_of_squares += lower * lower;
-            val = fabs(lower);
-            if (val > max_obj) max_val = val;
+            double val = fabs(lower);
+            if (val > max_val) max_val = val;
         }
 
         if (isfinite(upper))
         {
             sum_of_squares += upper * upper;
-            val = fabs(upper);
-            if (val > max_obj) max_val = val;
+            double val = fabs(upper);
+            if (val > max_val) max_val = val;
         }
     }
-
     state->constraint_bound_norm = sqrt(sum_of_squares);
     state->constraint_bound_norm_inf = max_val;
 
