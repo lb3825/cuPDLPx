@@ -171,6 +171,8 @@ void print_usage(const char *prog_name)
                     "Enable feasibility use feasibility polishing (default: false).\n");
     fprintf(stderr, "      --eps_feas_polish <tolerance>   Relative feasibility "
                     "polish tolerance (default: 1e-6).\n");
+    fprintf(stderr, "      --optimality_norm <norm_type>   "
+                    "Norm for optimality criteria: L2 (0) or L_INF (1) (default: L2).\n");
 }
 
 int main(int argc, char *argv[])
@@ -196,6 +198,7 @@ int main(int argc, char *argv[])
         {"sv_max_iter", required_argument, 0, 1011},
         {"sv_tol", required_argument, 0, 1012},
         {"eval_freq", required_argument, 0, 1013},
+        {"optimality_norm", required_argument, 0, 1014},
         {0, 0, 0, 0}};
 
     int opt;
@@ -250,6 +253,17 @@ int main(int argc, char *argv[])
             break;
         case 1013: // --eval_freq
             params.termination_evaluation_frequency = atoi(optarg);
+            break;
+        case 1014: // --optimality_norm
+            {
+                int norm_val = atoi(optarg);
+                if (norm_val == 0 || norm_val == 1) {
+                    params.optimality_norm = (norm_type_t)norm_val;
+                } else {
+                    fprintf(stderr, "Error: optimality_norm must be 0 (L2) or 1 (L_INF)\n");
+                    return 1;
+                }
+            }
             break;
         case '?': // Unknown option
             return 1;

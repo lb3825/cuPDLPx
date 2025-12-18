@@ -346,6 +346,8 @@ void set_default_parameters(pdhg_parameters_t *params)
     params->restart_params.k_i = 0.01;
     params->restart_params.k_d = 0.0;
     params->restart_params.i_smooth = 0.3;
+
+    params->optimality_norm = NORM_TYPE_L2;
 }
 
 #define PRINT_DIFF_INT(name, current, default_val) \
@@ -683,7 +685,7 @@ void compute_residual(pdhg_solver_state_t *state)
         state->constraint_upper_bound_finite_val, state->num_constraints,
         state->num_variables);
 
-    if (state->use_linf_norm) {
+    if (state->optimality_norm == NORM_TYPE_L_INF) {
         state->absolute_primal_residual = get_vector_inf_norm(state->blas_handle, 
                                           state->num_constraints, state->primal_residual);
     } else {
@@ -694,7 +696,7 @@ void compute_residual(pdhg_solver_state_t *state)
 
     state->absolute_primal_residual /= state->constraint_bound_rescaling;
 
-    if (state->use_linf_norm) {
+    if (state->optimality_norm == NORM_TYPE_L_INF) {
         state->absolute_dual_residual = get_vector_inf_norm(state->blas_handle, 
                                         state->num_variables, state->dual_residual);
     } else {
@@ -725,7 +727,7 @@ void compute_residual(pdhg_solver_state_t *state)
                                        state->objective_vector_rescaling) +
                                   state->objective_constant;
 
-    if (state->use_linf_norm) {
+    if (state->optimality_norm == NORM_TYPE_L_INF) {
         state->relative_primal_residual = 
             state->absolute_primal_residual / (1.0 + state->constraint_bound_norm_inf);
 
@@ -1229,7 +1231,7 @@ void compute_primal_feas_polish_residual(pdhg_solver_state_t *state, const pdhg_
         state->constraint_upper_bound, state->constraint_rescaling,
         state->num_constraints);
 
-    if (state->use_linf_norm) {
+    if (state->optimality_norm == NORM_TYPE_L_INF) {
         state->absolute_primal_residual = get_vector_inf_norm(state->blas_handle, 
                                           state->num_constraints, state->primal_residual);
     } else {
@@ -1240,7 +1242,7 @@ void compute_primal_feas_polish_residual(pdhg_solver_state_t *state, const pdhg_
 
     state->absolute_primal_residual /= state->constraint_bound_rescaling;
 
-    if (state->use_linf_norm) {
+    if (state->optimality_norm == NORM_TYPE_L_INF) {
         state->relative_primal_residual = state->absolute_primal_residual / (1.0 + state->constraint_bound_norm_inf);
     } else {
         state->relative_primal_residual = state->absolute_primal_residual / (1.0 + state->constraint_bound_norm);
@@ -1269,7 +1271,7 @@ void compute_dual_feas_polish_residual(pdhg_solver_state_t *state, const pdhg_so
         state->num_variables, state->num_constraints
     );
 
-    if (state->use_linf_norm) {
+    if (state->optimality_norm == NORM_TYPE_L_INF) {
         state->absolute_dual_residual = get_vector_inf_norm(state->blas_handle, 
                                         state->num_variables, state->dual_residual);
     } else {
@@ -1279,7 +1281,7 @@ void compute_dual_feas_polish_residual(pdhg_solver_state_t *state, const pdhg_so
 
     state->absolute_dual_residual /= state->objective_vector_rescaling;
 
-    if (state->use_linf_norm) {
+    if (state->optimality_norm == NORM_TYPE_L_INF) {
         state->relative_dual_residual = state->absolute_dual_residual / (1.0 + state->objective_vector_norm_inf);
     } else {
         state->relative_dual_residual = state->absolute_dual_residual / (1.0 + state->objective_vector_norm);

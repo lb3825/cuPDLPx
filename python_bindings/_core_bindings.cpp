@@ -244,7 +244,7 @@ static py::dict get_default_params_py()
     d["eps_feas_polish_relative"] = p.termination_criteria.eps_feas_polish_relative;
 
     // Termination criteria norm
-    d["use_linf_norm"] = p.use_linf_norm;
+    d["optimality_norm"] = static_cast<int>(p.optimality_norm);
     // power method for singular value estimation
     d["sv_max_iter"] = p.sv_max_iter;
     d["sv_tol"] = p.sv_tol;
@@ -265,6 +265,13 @@ static void parse_params_from_python(py::object params_obj, pdhg_parameters_t *p
     { if (d.contains(k)) tgt = py::cast<int>(d[k]); };
     auto getb = [&](const char *k, bool &tgt)
     { if (d.contains(k)) tgt = py::cast<bool>(d[k]); };
+    auto gete = [&](const char *k, norm_type_t &tgt)
+    { 
+        if (d.contains(k)) {
+            int val = py::cast<int>(d[k]);
+            tgt = static_cast<norm_type_t>(val);
+        }
+    };
 
     // verbosity
     getb("verbose", p->verbose);
@@ -299,7 +306,7 @@ static void parse_params_from_python(py::object params_obj, pdhg_parameters_t *p
     getf("eps_feas_polish_relative", p->termination_criteria.eps_feas_polish_relative);
 
     // Termination criteria norm
-    getb("use_linf_norm", p->use_linf_norm);
+    gete("optimality_norm", p->optimality_norm);
     // power method for singular value estimation
     geti("sv_max_iter", p->sv_max_iter);
     getf("sv_tol", p->sv_tol);

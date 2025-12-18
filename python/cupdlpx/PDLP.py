@@ -24,6 +24,10 @@ TIME_LIMIT        = 3
 ITERATION_LIMIT   = 4
 UNSPECIFIED       = -1
 
+# Norm types for optimality criteria
+L2 = 0
+L_INF = 1
+
 
 # parameter name alias
 _PARAM_ALIAS = {
@@ -54,7 +58,7 @@ _PARAM_ALIAS = {
     "FeasibilityPolishing": "feasibility_polishing",
     "FeasibilityPolishingTol": "eps_feas_polish_relative",
     # termination criteria
-    "UseLInfNorm": "use_linf_norm",
+    "OptimalityNorm": "optimality_norm",
     # singular value estimation (power method)
     "SVMaxIter": "sv_max_iter",
     "SVTol": "sv_tol",

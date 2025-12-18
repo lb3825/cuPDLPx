@@ -101,7 +101,7 @@ cupdlpx_result_t *optimize(const pdhg_parameters_t *params,
     pdhg_solver_state_t *state =
         initialize_solver_state(original_problem, rescale_info);
 
-    state->use_linf_norm = params ? params->use_linf_norm : false;
+    state->optimality_norm = params ? params->optimality_norm : NORM_TYPE_L2;
 
     rescale_info_free(rescale_info);
     initialize_step_size_and_primal_weight(state, params);
