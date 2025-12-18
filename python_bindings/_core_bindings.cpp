@@ -174,9 +174,12 @@ static const char *status_to_str(termination_reason_t r)
         return "TIME_LIMIT";
     case TERMINATION_REASON_ITERATION_LIMIT:
         return "ITERATION_LIMIT";
+    case TERMINATION_REASON_FEAS_POLISH_SUCCESS:
+        return "FEAS_POLISH_SUCCESS";
     case TERMINATION_REASON_UNSPECIFIED:
-    default:
         return "UNSPECIFIED";
+    default:
+        return "UNKNOWN";
     }
 }
 
@@ -242,6 +245,9 @@ static py::dict get_default_params_py()
 
     // Termination criteria norm
     d["use_linf_norm"] = p.use_linf_norm;
+    // power method for singular value estimation
+    d["sv_max_iter"] = p.sv_max_iter;
+    d["sv_tol"] = p.sv_tol;
 
     return d;
 }
@@ -294,6 +300,9 @@ static void parse_params_from_python(py::object params_obj, pdhg_parameters_t *p
 
     // Termination criteria norm
     getb("use_linf_norm", p->use_linf_norm);
+    // power method for singular value estimation
+    geti("sv_max_iter", p->sv_max_iter);
+    getf("sv_tol", p->sv_tol);
 }
 
 // view of matrix from Python
