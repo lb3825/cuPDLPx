@@ -415,8 +415,8 @@ initialize_solver_state(const pdhg_parameters_t *params,
 
     for (int i = 0; i < n_vars; ++i)
     {
-        val = fabs(working_problem->objective_vector[i]);
         if (state->optimality_norm == NORM_TYPE_L_INF) {
+            val = fabs(working_problem->objective_vector[i]);
             if (val > max_val) max_val = val;
         } else {
             sum_of_squares += working_problem->objective_vector[i] * working_problem->objective_vector[i];
@@ -458,9 +458,9 @@ initialize_solver_state(const pdhg_parameters_t *params,
     }
 
     if (state->optimality_norm == NORM_TYPE_L_INF) {
-        state->objective_vector_norm = max_val;
+        state->constraint_bound_norm = max_val;
     } else {
-        state->objective_vector_norm = sqrt(sum_of_squares);
+        state->constraint_bound_norm = sqrt(sum_of_squares);
     }
 
     state->num_blocks_primal =

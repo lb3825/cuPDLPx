@@ -301,6 +301,7 @@ int main(int argc, char *argv[])
             break;
         case 1015: // --no_presolve
             params.presolve = false;
+            break;
         case '?': // Unknown option
             return 1;
         }
