@@ -171,8 +171,8 @@ void print_usage(const char *prog_name)
                     "Enable feasibility use feasibility polishing (default: false).\n");
     fprintf(stderr, "      --eps_feas_polish <tolerance>   Relative feasibility "
                     "polish tolerance (default: 1e-6).\n");
-    fprintf(stderr, "      --optimality_norm <norm_type>   "
-                    "Norm for optimality criteria: L2 (0) or L_INF (1) (default: L2).\n");
+    fprintf(stderr, "      --opt_norm <norm_type>          "
+                    "Norm for optimality criteria: l2 or linf (default: l2).\n");
 }
 
 int main(int argc, char *argv[])
@@ -185,7 +185,6 @@ int main(int argc, char *argv[])
         {"verbose", no_argument, 0, 'v'},
         {"time_limit", required_argument, 0, 1001},
         {"iter_limit", required_argument, 0, 1002},
-        {"linf_norm", no_argument, 0, 'f'},
         {"eps_opt", required_argument, 0, 1003},
         {"eps_feas", required_argument, 0, 1004},
         {"eps_infeas_detect", required_argument, 0, 1005},
@@ -198,7 +197,7 @@ int main(int argc, char *argv[])
         {"sv_max_iter", required_argument, 0, 1011},
         {"sv_tol", required_argument, 0, 1012},
         {"eval_freq", required_argument, 0, 1013},
-        {"optimality_norm", required_argument, 0, 1014},
+        {"opt_norm", required_argument, 0, 1014},
         {0, 0, 0, 0}};
 
     int opt;
@@ -254,13 +253,15 @@ int main(int argc, char *argv[])
         case 1013: // --eval_freq
             params.termination_evaluation_frequency = atoi(optarg);
             break;
-        case 1014: // --optimality_norm
+        case 1014: // --opt_norm
             {
-                int norm_val = atoi(optarg);
-                if (norm_val == 0 || norm_val == 1) {
-                    params.optimality_norm = (norm_type_t)norm_val;
+                const char *norm_str = optarg;
+                if (strcmp(norm_str, "l2") == 0) {
+                    params.optimality_norm = NORM_TYPE_L2;
+                } else if (strcmp(norm_str, "linf") == 0) {
+                    params.optimality_norm = NORM_TYPE_L_INF;
                 } else {
-                    fprintf(stderr, "Error: optimality_norm must be 0 (L2) or 1 (L_INF)\n");
+                    fprintf(stderr, "Error: opt_norm must be 'l2' or 'linf'\n");
                     return 1;
                 }
             }

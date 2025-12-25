@@ -141,7 +141,7 @@ Below is a list of commonly used parameters, their internal keys, and descriptio
 | `IterationLimit` | `iteration_limit` | int | `2147483647` | Maximum number of iterations. |
 | `OutputFlag`, `LogToConsole` | `verbose` | bool | `False` | Enable (`True`) or disable (`False`) console logging output. |
 | `TermCheckFreq` | `termination_evaluation_frequency` | int | `200` | Frequency (in iterations) at which termination conditions are evaluated. |
-| `OptimalityNorm` | `optimality_norm` | int | `PDLP.L2` (0) | Norm for optimality criteria. Use `PDLP.L2` (0) for L2 norm or `PDLP.L_INF` (1) for infinity norm. |
+| `OptimalityNorm` | `optimality_norm` | string | `"l2"` | Norm for optimality criteria. Use `"l2"` for L2 norm or `"linf"` for infinity norm. |
 | `OptimalityTol` | `eps_optimal_relative` | float | `1e-4` | Relative tolerance for optimality gap. Solver stops if the relative primal-dual gap ≤ this value. |
 | `FeasibilityTol` | `eps_feasible_relative` | float | `1e-4` | Relative feasibility tolerance for primal/dual residuals. |
 | `InfeasibleTol` | `eps_infeasible` | float | `1e-10` | Threshold for declaring infeasibility. |

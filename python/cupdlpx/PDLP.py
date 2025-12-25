@@ -24,10 +24,6 @@ TIME_LIMIT        = 3
 ITERATION_LIMIT   = 4
 UNSPECIFIED       = -1
 
-# Norm types for optimality criteria
-L2 = 0
-L_INF = 1
-
 
 # parameter name alias
 _PARAM_ALIAS = {
