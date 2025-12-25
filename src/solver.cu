@@ -116,8 +116,6 @@ cupdlpx_result_t *optimize(const pdhg_parameters_t *params,
     rescale_info_t *rescale_info = rescale_problem(params, working_problem);
     pdhg_solver_state_t *state = initialize_solver_state(params, working_problem, rescale_info);
 
-    state->optimality_norm = params ? params->optimality_norm : NORM_TYPE_L2;
-
     rescale_info_free(rescale_info);
     initialize_step_size_and_primal_weight(state, params);
     clock_t start_time = clock();
@@ -225,6 +223,8 @@ initialize_solver_state(const pdhg_parameters_t *params,
 {
     pdhg_solver_state_t *state =
         (pdhg_solver_state_t *)safe_calloc(1, sizeof(pdhg_solver_state_t));
+
+    state->optimality_norm = params ? params->optimality_norm : NORM_TYPE_L2;
 
     int n_vars = working_problem->num_variables;
     int n_cons = working_problem->num_constraints;
