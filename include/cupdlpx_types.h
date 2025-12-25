@@ -98,6 +98,7 @@ extern "C"
 		double reflection_coefficient;
 		bool feasibility_polishing;
 		norm_type_t optimality_norm;
+		bool presolve;
 	} pdhg_parameters_t;
 
 	typedef struct

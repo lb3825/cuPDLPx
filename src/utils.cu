@@ -348,6 +348,7 @@ void set_default_parameters(pdhg_parameters_t *params)
     params->restart_params.i_smooth = 0.3;
 
     params->optimality_norm = NORM_TYPE_L2;
+    params->presolve = true;
 }
 
 #define PRINT_DIFF_INT(name, current, default_val) \

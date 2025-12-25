@@ -369,12 +369,11 @@ initialize_solver_state(const lp_problem_t *original_problem,
 
     for (int i = 0; i < n_vars; ++i)
     {
-        val = fabs(original_problem->objective_vector[i]);
+        val = fabs(working_problem->objective_vector[i]);
         if (state->optimality_norm == NORM_TYPE_L_INF) {
             if (val > max_val) max_val = val;
         } else {
-            sum_of_squares += original_problem->objective_vector[i] *
-                              original_problem->objective_vector[i];
+            sum_of_squares += working_problem->objective_vector[i] * working_problem->objective_vector[i];
         }
     }
 

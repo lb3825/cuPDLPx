@@ -173,6 +173,8 @@ void print_usage(const char *prog_name)
                     "polish tolerance (default: 1e-6).\n");
     fprintf(stderr, "      --opt_norm <norm_type>          "
                     "Norm for optimality criteria: l2 or linf (default: l2).\n");
+    fprintf(stderr, "      --no_presolve                   "
+                    "Disable presolve (default: enabled).\n");
 }
 
 int main(int argc, char *argv[])
@@ -198,6 +200,7 @@ int main(int argc, char *argv[])
         {"sv_tol", required_argument, 0, 1012},
         {"eval_freq", required_argument, 0, 1013},
         {"opt_norm", required_argument, 0, 1014},
+        {"no_presolve", no_argument, 0, 1015},
         {0, 0, 0, 0}};
 
     int opt;
@@ -266,6 +269,8 @@ int main(int argc, char *argv[])
                 }
             }
             break;
+        case 1015: // --no_presolve
+            params.presolve = false;
         case '?': // Unknown option
             return 1;
         }
