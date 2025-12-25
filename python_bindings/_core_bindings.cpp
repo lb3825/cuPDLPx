@@ -185,6 +185,8 @@ static const char *status_to_str(termination_reason_t r)
         return "PRIMAL_INFEASIBLE";
     case TERMINATION_REASON_DUAL_INFEASIBLE:
         return "DUAL_INFEASIBLE";
+    case TERMINATION_REASON_INFEASIBLE_OR_UNBOUNDED:
+        return "INFEASIBLE_OR_UNBOUNDED";
     case TERMINATION_REASON_TIME_LIMIT:
         return "TIME_LIMIT";
     case TERMINATION_REASON_ITERATION_LIMIT:
@@ -213,6 +215,8 @@ static int status_to_code(termination_reason_t r)
         return 3;
     case TERMINATION_REASON_ITERATION_LIMIT:
         return 4;
+    case TERMINATION_REASON_INFEASIBLE_OR_UNBOUNDED:
+        return 5;
     case TERMINATION_REASON_UNSPECIFIED:
     default:
         return -1;
@@ -263,6 +267,9 @@ static py::dict get_default_params_py()
     // power method for singular value estimation
     d["sv_max_iter"] = p.sv_max_iter;
     d["sv_tol"] = p.sv_tol;
+
+    // presolve
+    d["presolve"] = p.presolve;
 
     return d;
 }
@@ -331,6 +338,9 @@ static void parse_params_from_python(py::object params_obj, pdhg_parameters_t *p
     // power method for singular value estimation
     geti("sv_max_iter", p->sv_max_iter);
     getf("sv_tol", p->sv_tol);
+
+    // presolve
+    getb("presolve", p->presolve);
 }
 
 // view of matrix from Python

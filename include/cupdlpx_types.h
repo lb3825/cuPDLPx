@@ -16,6 +16,7 @@ limitations under the License.
 
 #pragma once
 
+#include "PSLP_stats.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -30,6 +31,7 @@ extern "C"
 		TERMINATION_REASON_OPTIMAL,
 		TERMINATION_REASON_PRIMAL_INFEASIBLE,
 		TERMINATION_REASON_DUAL_INFEASIBLE,
+		TERMINATION_REASON_INFEASIBLE_OR_UNBOUNDED,
 		TERMINATION_REASON_TIME_LIMIT,
 		TERMINATION_REASON_ITERATION_LIMIT,
 		TERMINATION_REASON_FEAS_POLISH_SUCCESS
@@ -105,13 +107,22 @@ extern "C"
 	{
 		int num_variables;
 		int num_constraints;
+		int num_nonzeros;
+
+		int num_reduced_variables;
+		int num_reduced_constraints;
+		int num_reduced_nonzeros;
 
 		double *primal_solution;
 		double *dual_solution;
+		double *reduced_cost;
 
 		int total_count;
 		double rescaling_time_sec;
 		double cumulative_time_sec;
+		double presolve_time;
+		int presolve_status;
+		// PresolveStats presolve_stats;
 
 		double absolute_primal_residual;
 		double relative_primal_residual;

@@ -16,6 +16,7 @@ limitations under the License.
 
 #include "cupdlpx.h"
 #include "mps_parser.h"
+#include "presolve.h"
 #include "solver.h"
 #include "utils.h"
 #include <getopt.h>
@@ -61,7 +62,7 @@ void save_solution(const double *data, int size, const char *output_dir,
                    const char *instance_name, const char *suffix)
 {
     char *file_path = get_output_path(output_dir, instance_name, suffix);
-    if (file_path == NULL)
+    if (file_path == NULL || data == NULL)
     {
         return;
     }
@@ -113,7 +114,36 @@ void save_solver_summary(const cupdlpx_result_t *result, const char *output_dir,
     fprintf(outfile, "Absolute Objective Gap: %e\n", result->objective_gap);
     fprintf(outfile, "Relative Objective Gap: %e\n",
             result->relative_objective_gap);
-    if(result->feasibility_polishing_time > 0.0){
+    fprintf(outfile, "Rows: %d\n", result->num_constraints);
+    fprintf(outfile, "Columns: %d\n", result->num_variables);
+    fprintf(outfile, "Nonzeros: %d\n", result->num_nonzeros);
+    if (result->presolve_time > 0.0)
+    {
+        fprintf(outfile, "Presolve Status: %s\n", get_presolve_status_str(result->presolve_status));
+        fprintf(outfile, "Presolve Time (sec): %e\n", result->presolve_time);
+        fprintf(outfile, "Reduced Rows: %d\n", result->num_reduced_constraints);
+        fprintf(outfile, "Reduced Columns: %d\n", result->num_reduced_variables);
+        fprintf(outfile, "Reduced Nonzeros: %d\n", result->num_reduced_nonzeros);
+
+        // if (result->presolve_stats.n_cols_original > 0) {
+        //     fprintf(outfile, "NNZ Removed Trivial: %d\n", result->presolve_stats.nnz_removed_trivial);
+        //     fprintf(outfile, "NNZ Removed Fast: %d\n", result->presolve_stats.nnz_removed_fast);
+        //     fprintf(outfile, "NNZ Removed Primal Propagation: %d\n", result->presolve_stats.nnz_removed_primal_propagation);
+        //     fprintf(outfile, "NNZ Removed Parallel Rows: %d\n", result->presolve_stats.nnz_removed_parallel_rows);
+        //     fprintf(outfile, "NNZ Removed Parallel Cols: %d\n", result->presolve_stats.nnz_removed_parallel_cols);
+            
+        //     fprintf(outfile, "Presolve Time Init (sec): %e\n", result->presolve_stats.time_init);
+        //     fprintf(outfile, "Presolve Time Run (sec): %e\n", result->presolve_stats.time_presolve);
+        //     fprintf(outfile, "Presolve Time Fast (sec): %e\n", result->presolve_stats.time_fast_reductions);
+        //     fprintf(outfile, "Presolve Time Medium (sec): %e\n", result->presolve_stats.time_medium_reductions);
+        //     fprintf(outfile, "Presolve Time Primal Proppagation (sec): %e\n", result->presolve_stats.time_primal_propagation);
+        //     fprintf(outfile, "Presolve Time Parallel Rows (sec): %e\n", result->presolve_stats.time_parallel_rows);
+        //     fprintf(outfile, "Presolve Time Parallel Cols (sec): %e\n", result->presolve_stats.time_parallel_cols);
+        //     fprintf(outfile, "Postsolve Time (sec): %e\n", result->presolve_stats.time_postsolve);
+        // }
+    }
+    if (result->feasibility_polishing_time > 0.0)
+    {
         fprintf(outfile, "Feasibility Polishing Time (sec): %e\n", result->feasibility_polishing_time);
         fprintf(outfile, "Feasibility Polishing Iteration Count: %d\n", result->feasibility_iteration);
     }
@@ -204,7 +234,7 @@ int main(int argc, char *argv[])
         {0, 0, 0, 0}};
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "hvf", long_options, NULL)) != -1)
+    while ((opt = getopt_long(argc, argv, "hvfp", long_options, NULL)) != -1)
     {
         switch (opt)
         {
@@ -232,7 +262,7 @@ int main(int argc, char *argv[])
         case 1006: // --eps_feas_polish_relative
             params.termination_criteria.eps_feas_polish_relative = atof(optarg);
             break;
-        case 'f':  // --feasibility_polishing
+        case 'f': // --feasibility_polishing
             params.feasibility_polishing = true;
             break;
         case 1007: // --l_inf_ruiz_iter
