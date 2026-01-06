@@ -223,6 +223,13 @@ const char *termination_reason_to_string(termination_reason_t reason)
 bool optimality_criteria_met(const pdhg_solver_state_t *state,
                              double rel_opt_tol, double rel_feas_tol)
 {
+    if (state->relative_dual_residual < rel_feas_tol &&
+            state->relative_primal_residual < rel_feas_tol &&
+            state->relative_objective_gap < rel_opt_tol) {
+                printf("  primal_residual  : %.4e\n", state->relative_primal_residual);
+                printf("  dual_residual  : %.4e\n", state->relative_dual_residual);
+                printf("  objective_gap  : %.4e\n", state->relative_objective_gap);
+            }
     return state->relative_dual_residual < rel_feas_tol &&
             state->relative_primal_residual < rel_feas_tol &&
             state->relative_objective_gap < rel_opt_tol;
@@ -534,7 +541,8 @@ __global__ void compute_residual_kernel(
     const double *objective_vector, const double *constraint_rescaling,
     const double *variable_rescaling, double *dual_obj_contribution,
     const double *const_lb_finite, const double *const_ub_finite,
-    int num_constraints, int num_variables)
+    int num_constraints, int num_variables, 
+    double *unscaled_primal_product, double *unscaled_dual_product)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -544,6 +552,9 @@ __global__ void compute_residual_kernel(
         double clamped_val =
             fmax(constraint_lower_bound[i],
                  fmin(primal_product[i], constraint_upper_bound[i]));
+
+        unscaled_primal_product[i] = primal_product[i] * constraint_rescaling[i];
+
         primal_residual[i] =
             (primal_product[i] - clamped_val) * constraint_rescaling[i];
 
@@ -554,6 +565,7 @@ __global__ void compute_residual_kernel(
     else if (i < num_constraints + num_variables)
     {
         int idx = i - num_constraints;
+        unscaled_dual_product[idx] = dual_product[idx] * variable_rescaling[idx];
         dual_residual[idx] =
             (objective_vector[idx] - dual_product[idx] - dual_slack[idx]) *
             variable_rescaling[idx];
@@ -710,7 +722,7 @@ void compute_residual(pdhg_solver_state_t *state, norm_type_t optimality_norm)
         state->variable_rescaling, state->primal_slack,
         state->constraint_lower_bound_finite_val,
         state->constraint_upper_bound_finite_val, state->num_constraints,
-        state->num_variables);
+        state->num_variables, state->delta_primal_solution, state->delta_dual_solution);
 
     if (optimality_norm == NORM_TYPE_L_INF) {
         state->absolute_primal_residual = get_vector_inf_norm(state->blas_handle, 
@@ -754,18 +766,54 @@ void compute_residual(pdhg_solver_state_t *state, norm_type_t optimality_norm)
                                        state->objective_vector_rescaling) +
                                   state->objective_constant;
 
+
+
+    // state->relative_primal_residual = 
+    //     state->absolute_primal_residual / (1.0 + state->constraint_bound_norm);
+
+
+    double primal_prod_inf_orig = 0.0;
+    if (state->num_constraints > 0) {
+        // Use the cached unscaled primal product (stored in delta_primal_solution)
+        primal_prod_inf_orig = get_vector_inf_norm(state->blas_handle, 
+                                                    state->num_constraints, 
+                                                    state->delta_primal_solution);
+        primal_prod_inf_orig /= state->constraint_bound_rescaling;
+    }
+
     state->relative_primal_residual = 
-        state->absolute_primal_residual / (1.0 + state->constraint_bound_norm);
-    
+        state->absolute_primal_residual / (1.0 + primal_prod_inf_orig);
+
+
+
+    // state->relative_dual_residual =
+    //     state->absolute_dual_residual / (1.0 + state->objective_vector_norm);
+
+    // Compute infinity norm of unscaled dual residual
+    double dual_residual_inf_orig = 0.0;
+    if (state->num_variables > 0) {
+        // Use the cached unscaled dual product (stored in delta_dual_solution)
+        dual_residual_inf_orig = get_vector_inf_norm(state->blas_handle, 
+                                                      state->num_variables, 
+                                                      state->delta_dual_solution);
+        dual_residual_inf_orig /= state->objective_vector_rescaling;
+    }
+
     state->relative_dual_residual =
-        state->absolute_dual_residual / (1.0 + state->objective_vector_norm);
+        state->absolute_dual_residual / (1.0 + fmax(state->objective_vector_norm, dual_residual_inf_orig));
+
+    // state->relative_dual_residual =
+    //     state->absolute_dual_residual / (1.0 + fmax(state->objective_vector_norm, ));
 
     state->objective_gap =
         fabs(state->primal_objective_value - state->dual_objective_value);
 
+    // state->relative_objective_gap =
+    //     state->objective_gap / (1.0 + fabs(state->primal_objective_value) +
+    //                             fabs(state->dual_objective_value));
     state->relative_objective_gap =
-        state->objective_gap / (1.0 + fabs(state->primal_objective_value) +
-                                fabs(state->dual_objective_value));
+        state->objective_gap / (1.0 + fmax(fabs(state->primal_objective_value),
+                                fabs(state->dual_objective_value)));
 }
 
 void compute_infeasibility_information(pdhg_solver_state_t *state)

@@ -431,6 +431,7 @@ initialize_solver_state(const pdhg_parameters_t *params,
     max_val = 0.0;
     val = 0.0;
 
+    
     for (int i = 0; i < n_cons; ++i)
     {
         double lower = working_problem->constraint_lower_bound[i];
