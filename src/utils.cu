@@ -220,12 +220,95 @@ const char *termination_reason_to_string(termination_reason_t reason)
     }
 }
 
+static double get_vector_inf_norm(cublasHandle_t handle, int n,
+                                  const double *x_d)
+{
+    if (n <= 0)
+        return 0.0;
+    int index;
+
+    cublasIdamax(handle, n, x_d, 1, &index);
+    double max_val;
+
+    CUDA_CHECK(cudaMemcpy(&max_val, x_d + (index - 1), sizeof(double),
+                          cudaMemcpyDeviceToHost));
+    return fabs(max_val);
+}
+
 bool optimality_criteria_met(const pdhg_solver_state_t *state,
                              double rel_opt_tol, double rel_feas_tol)
 {
-    return state->relative_dual_residual < rel_feas_tol &&
-            state->relative_primal_residual < rel_feas_tol &&
-            state->relative_objective_gap < rel_opt_tol;
+    // // Compute strict normalization factors on the fly to decouple from restart logic
+    // int i = blockIdx.x * blockDim.x + threadIdx.x;
+    // if (i < state->num_constraints)
+    // {
+
+    //     double clamped_val =
+    //         fmax(state->constraint_lower_bound[i],
+    //              fmin(state->primal_product[i], state->constraint_upper_bound[i]));
+
+    //     state->primal_product[i] = state->primal_product[i] * state->constraint_rescaling[i];
+    // }
+    // else if (i < state->num_constraints + state->num_variables)
+    // {
+    //     int idx = i - state->num_constraints;
+    //     state->dual_product[idx] = state->dual_product[idx] * state->variable_rescaling[idx];
+    // }
+    // double norm_Ax = 0.0;
+    // norm_Ax = get_vector_inf_norm(state->blas_handle, 
+    //                                                 state->num_constraints, 
+    //                                                 state->primal_product);
+    // norm_Ax /= state->constraint_bound_rescaling;
+
+    // double norm_Aty = 0.0;
+    // norm_Aty = get_vector_inf_norm(state->blas_handle, 
+    //                                                   state->num_variables, 
+    //                                                   state->dual_product);
+    // norm_Aty /= state->objective_vector_rescaling;
+    // // double norm_Ax = get_vector_inf_norm(state->blas_handle, state->num_constraints, state->primal_product);
+    // // double norm_Aty = get_vector_inf_norm(state->blas_handle, state->num_variables, state->dual_product);
+    
+    // // Strict relative primal residual: abs / (1 + ||Ax||)
+    // double strict_primal_res = state->absolute_primal_residual / (1.0 + norm_Ax);
+    
+    // // Strict relative dual residual: abs / (1 + max(||q||, ||A'y||))
+    // // Assuming Px is small or handled; state->objective_vector_norm is ||q||
+    // double strict_dual_res = state->absolute_dual_residual / (1.0 + fmax(state->objective_vector_norm, norm_Aty));
+    
+    // // Strict duality gap: abs_gap / (1 + max(|primal_obj|, |dual_obj|))
+    // // Approximate strict denominator using objective values
+    // double strict_gap = state->objective_gap / (1.0 + fmax(fabs(state->primal_objective_value), fabs(state->dual_objective_value)));
+
+    // return strict_dual_res < rel_feas_tol &&
+    //        strict_primal_res < rel_feas_tol &&
+    //        strict_gap < rel_opt_tol;
+
+    double norm_Ax = 0.0;
+    norm_Ax = get_vector_inf_norm(state->blas_handle, 
+                                  state->num_constraints, 
+                                  state->primal_product);
+    norm_Ax /= state->constraint_bound_rescaling;
+
+    double norm_Aty = 0.0;
+    norm_Aty = get_vector_inf_norm(state->blas_handle, 
+                                   state->num_variables, 
+                                   state->dual_product);
+    norm_Aty /= state->objective_vector_rescaling;
+    
+    // Strict relative primal residual: abs / (1 + ||Ax||)
+    double strict_primal_res = state->absolute_primal_residual / (1.0 + norm_Ax);
+    
+    // Strict relative dual residual: abs / (1 + max(||q||, ||A'y||))
+    // Assuming Px is small or handled; state->objective_vector_norm is ||q||
+    double strict_dual_res = state->absolute_dual_residual / (1.0 + fmax(state->objective_vector_norm, norm_Aty));
+    
+    // Strict duality gap: abs_gap / (1 + max(|primal_obj|, |dual_obj|))
+    // Approximate strict denominator using objective values
+    double strict_gap = state->objective_gap / (1.0 + fmax(fabs(state->primal_objective_value), fabs(state->dual_objective_value)));
+
+    return strict_dual_res < rel_feas_tol &&
+           strict_primal_res < rel_feas_tol &&
+           strict_gap < rel_opt_tol;
 }
 
 bool primal_infeasibility_criteria_met(const pdhg_solver_state_t *state,
@@ -534,8 +617,7 @@ __global__ void compute_residual_kernel(
     const double *objective_vector, const double *constraint_rescaling,
     const double *variable_rescaling, double *dual_obj_contribution,
     const double *const_lb_finite, const double *const_ub_finite,
-    int num_constraints, int num_variables, 
-    double *unscaled_primal_product, double *unscaled_dual_product)
+    int num_constraints, int num_variables)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -546,7 +628,7 @@ __global__ void compute_residual_kernel(
             fmax(constraint_lower_bound[i],
                  fmin(primal_product[i], constraint_upper_bound[i]));
 
-        unscaled_primal_product[i] = primal_product[i] * constraint_rescaling[i];
+        // unscaled_primal_product[i] = primal_product[i] * constraint_rescaling[i];
 
         primal_residual[i] =
             (primal_product[i] - clamped_val) * constraint_rescaling[i];
@@ -558,7 +640,7 @@ __global__ void compute_residual_kernel(
     else if (i < num_constraints + num_variables)
     {
         int idx = i - num_constraints;
-        unscaled_dual_product[idx] = dual_product[idx] * variable_rescaling[idx];
+        // unscaled_dual_product[idx] = dual_product[idx] * variable_rescaling[idx];
         dual_residual[idx] =
             (objective_vector[idx] - dual_product[idx] - dual_slack[idx]) *
             variable_rescaling[idx];
@@ -664,21 +746,6 @@ __global__ void dual_objective_dual_slack_contribution_array_kernel(
     }
 }
 
-static double get_vector_inf_norm(cublasHandle_t handle, int n,
-                                  const double *x_d)
-{
-    if (n <= 0)
-        return 0.0;
-    int index;
-
-    cublasIdamax(handle, n, x_d, 1, &index);
-    double max_val;
-
-    CUDA_CHECK(cudaMemcpy(&max_val, x_d + (index - 1), sizeof(double),
-                          cudaMemcpyDeviceToHost));
-    return fabs(max_val);
-}
-
 static double get_vector_sum(cublasHandle_t handle, int n, double *ones_d,
                              const double *x_d)
 {
@@ -715,7 +782,7 @@ void compute_residual(pdhg_solver_state_t *state, norm_type_t optimality_norm)
         state->variable_rescaling, state->primal_slack,
         state->constraint_lower_bound_finite_val,
         state->constraint_upper_bound_finite_val, state->num_constraints,
-        state->num_variables, state->delta_primal_solution, state->delta_dual_solution);
+        state->num_variables);
 
     if (optimality_norm == NORM_TYPE_L_INF) {
         state->absolute_primal_residual = get_vector_inf_norm(state->blas_handle, 
@@ -761,52 +828,49 @@ void compute_residual(pdhg_solver_state_t *state, norm_type_t optimality_norm)
 
 
 
-    // state->relative_primal_residual = 
-    //     state->absolute_primal_residual / (1.0 + state->constraint_bound_norm);
-
-
-    double primal_prod_inf_orig = 0.0;
-    if (state->num_constraints > 0) {
-        // Use the cached unscaled primal product (stored in delta_primal_solution)
-        primal_prod_inf_orig = get_vector_inf_norm(state->blas_handle, 
-                                                    state->num_constraints, 
-                                                    state->delta_primal_solution);
-        primal_prod_inf_orig /= state->constraint_bound_rescaling;
-    }
-
     state->relative_primal_residual = 
-        state->absolute_primal_residual / (1.0 + primal_prod_inf_orig);
+        state->absolute_primal_residual / (1.0 + state->constraint_bound_norm);
 
 
+    // double primal_prod_inf_orig = 0.0;
+    // if (state->num_constraints > 0) {
+    //     // Use the cached unscaled primal product (stored in delta_primal_solution)
+        // primal_prod_inf_orig = get_vector_inf_norm(state->blas_handle, 
+        //                                             state->num_constraints, 
+        //                                             state->delta_primal_solution);
+    //     primal_prod_inf_orig /= state->constraint_bound_rescaling;
+    // }
 
-    // state->relative_dual_residual =
-    //     state->absolute_dual_residual / (1.0 + state->objective_vector_norm);
+    // state->relative_primal_residual = 
+    //     state->absolute_primal_residual / (1.0 + primal_prod_inf_orig);
 
-    // Compute infinity norm of unscaled dual residual
-    double dual_residual_inf_orig = 0.0;
-    if (state->num_variables > 0) {
-        // Use the cached unscaled dual product (stored in delta_dual_solution)
-        dual_residual_inf_orig = get_vector_inf_norm(state->blas_handle, 
-                                                      state->num_variables, 
-                                                      state->delta_dual_solution);
-        dual_residual_inf_orig /= state->objective_vector_rescaling;
-    }
+
 
     state->relative_dual_residual =
-        state->absolute_dual_residual / (1.0 + fmax(state->objective_vector_norm, dual_residual_inf_orig));
+        state->absolute_dual_residual / (1.0 + state->objective_vector_norm);
+
+    // // Compute infinity norm of unscaled dual residual
+    // double dual_residual_inf_orig = 0.0;
+    // if (state->num_variables > 0) {
+    //     // Use the cached unscaled dual product (stored in delta_dual_solution)
+    //     dual_residual_inf_orig = get_vector_inf_norm(state->blas_handle, 
+    //                                                   state->num_variables, 
+    //                                                   state->delta_dual_solution);
+    //     dual_residual_inf_orig /= state->objective_vector_rescaling;
+    // }
 
     // state->relative_dual_residual =
-    //     state->absolute_dual_residual / (1.0 + fmax(state->objective_vector_norm, ));
+    //     state->absolute_dual_residual / (1.0 + fmax(state->objective_vector_norm, dual_residual_inf_orig));
 
     state->objective_gap =
         fabs(state->primal_objective_value - state->dual_objective_value);
 
-    // state->relative_objective_gap =
-    //     state->objective_gap / (1.0 + fabs(state->primal_objective_value) +
-    //                             fabs(state->dual_objective_value));
     state->relative_objective_gap =
-        state->objective_gap / (1.0 + fmax(fabs(state->primal_objective_value),
-                                fabs(state->dual_objective_value)));
+        state->objective_gap / (1.0 + fabs(state->primal_objective_value) +
+                                fabs(state->dual_objective_value));
+    // state->relative_objective_gap =
+    //     state->objective_gap / (1.0 + fmax(fabs(state->primal_objective_value),
+    //                             fabs(state->dual_objective_value)));
 }
 
 void compute_infeasibility_information(pdhg_solver_state_t *state)
