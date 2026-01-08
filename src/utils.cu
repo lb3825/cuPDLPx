@@ -223,13 +223,6 @@ const char *termination_reason_to_string(termination_reason_t reason)
 bool optimality_criteria_met(const pdhg_solver_state_t *state,
                              double rel_opt_tol, double rel_feas_tol)
 {
-    if (state->relative_dual_residual < rel_feas_tol &&
-            state->relative_primal_residual < rel_feas_tol &&
-            state->relative_objective_gap < rel_opt_tol) {
-                printf("  primal_residual  : %.4e\n", state->relative_primal_residual);
-                printf("  dual_residual  : %.4e\n", state->relative_dual_residual);
-                printf("  objective_gap  : %.4e\n", state->relative_objective_gap);
-            }
     return state->relative_dual_residual < rel_feas_tol &&
             state->relative_primal_residual < rel_feas_tol &&
             state->relative_objective_gap < rel_opt_tol;
